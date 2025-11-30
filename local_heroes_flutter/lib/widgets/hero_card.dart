@@ -23,11 +23,12 @@ class HeroCard extends StatefulWidget {
 }
 
 class _HeroCardState extends State<HeroCard>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   Offset _dragOffset = Offset.zero;
   bool _isDragging = false;
   late AnimationController _animationController;
   late Animation<Offset> _returnAnimation;
+  AnimationController? _swipeOutController;
 
   @override
   void initState() {
@@ -55,6 +56,7 @@ class _HeroCardState extends State<HeroCard>
 
   @override
   void dispose() {
+    _swipeOutController?.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -99,7 +101,10 @@ class _HeroCardState extends State<HeroCard>
     final screenWidth = MediaQuery.of(context).size.width;
     final targetX = isKeep ? screenWidth * 1.5 : -screenWidth * 1.5;
 
-    final controller = AnimationController(
+    // Dispose previous swipe out controller if any
+    _swipeOutController?.dispose();
+    
+    _swipeOutController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
@@ -108,24 +113,23 @@ class _HeroCardState extends State<HeroCard>
       begin: _dragOffset,
       end: Offset(targetX, _dragOffset.dy),
     ).animate(CurvedAnimation(
-      parent: controller,
+      parent: _swipeOutController!,
       curve: Curves.easeOut,
     ));
 
-    controller.addListener(() {
+    _swipeOutController!.addListener(() {
       setState(() {
         _dragOffset = animation.value;
       });
     });
 
-    controller.addStatusListener((status) {
+    _swipeOutController!.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         widget.onSwipe(isKeep);
-        controller.dispose();
       }
     });
 
-    controller.forward();
+    _swipeOutController!.forward();
   }
 
   void _returnToCenter() {
@@ -297,7 +301,7 @@ class _HeroCardState extends State<HeroCard>
 
   Widget _buildContentSection() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       decoration: const BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.only(
@@ -306,17 +310,18 @@ class _HeroCardState extends State<HeroCard>
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Avatar circle
           Transform.translate(
-            offset: const Offset(0, -56),
+            offset: const Offset(0, -40),
             child: Container(
-              width: 80,
-              height: 80,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 4),
+                border: Border.all(color: Colors.white, width: 3),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.1),
@@ -333,7 +338,7 @@ class _HeroCardState extends State<HeroCard>
                         child: Text(
                           widget.hero.initials,
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.grey[500],
                           ),
@@ -344,7 +349,7 @@ class _HeroCardState extends State<HeroCard>
                       child: Text(
                         widget.hero.initials,
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.grey[500],
                         ),
@@ -353,27 +358,30 @@ class _HeroCardState extends State<HeroCard>
             ),
           ),
 
-          // Name
+          // Name and content - shifted up to compensate for avatar overlap
           Transform.translate(
-            offset: const Offset(0, -40),
+            offset: const Offset(0, -28),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   widget.hero.name,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textDark,
                   ),
                   textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
 
                 // Field badge
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
+                    horizontal: 10,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.grey[100],
@@ -382,25 +390,25 @@ class _HeroCardState extends State<HeroCard>
                   child: Text(
                     widget.hero.field.toUpperCase(),
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF475569), // slate-600
                       letterSpacing: 0.5,
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
-                // Bio
+                // Bio - limited to 3 lines with ellipsis
                 Text(
                   widget.hero.bio,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: Colors.grey[600],
-                    height: 1.5,
+                    height: 1.4,
                   ),
                   textAlign: TextAlign.center,
-                  maxLines: 4,
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
