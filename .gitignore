@@ -22,3 +22,25 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Flutter/Dart specific
+local_heroes_flutter/.dart_tool/
+local_heroes_flutter/.packages
+local_heroes_flutter/build/
+local_heroes_flutter/.flutter-plugins
+local_heroes_flutter/.flutter-plugins-dependencies
+local_heroes_flutter/pubspec.lock
+local_heroes_flutter/android/
+local_heroes_flutter/ios/
+local_heroes_flutter/web/
+local_heroes_flutter/linux/
+local_heroes_flutter/macos/
+local_heroes_flutter/windows/
+local_heroes_flutter/test/
+*.iml
+*.class
+*.dex
+*.ap_
+*.apk
+*.aab
+*.ipa
