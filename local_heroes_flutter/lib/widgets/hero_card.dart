@@ -28,6 +28,7 @@ class _HeroCardState extends State<HeroCard>
   bool _isDragging = false;
   late AnimationController _animationController;
   late Animation<Offset> _returnAnimation;
+  AnimationController? _swipeOutController;
 
   @override
   void initState() {
@@ -55,6 +56,7 @@ class _HeroCardState extends State<HeroCard>
 
   @override
   void dispose() {
+    _swipeOutController?.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -99,7 +101,10 @@ class _HeroCardState extends State<HeroCard>
     final screenWidth = MediaQuery.of(context).size.width;
     final targetX = isKeep ? screenWidth * 1.5 : -screenWidth * 1.5;
 
-    final controller = AnimationController(
+    // Dispose previous swipe out controller if any
+    _swipeOutController?.dispose();
+    
+    _swipeOutController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
@@ -108,24 +113,23 @@ class _HeroCardState extends State<HeroCard>
       begin: _dragOffset,
       end: Offset(targetX, _dragOffset.dy),
     ).animate(CurvedAnimation(
-      parent: controller,
+      parent: _swipeOutController!,
       curve: Curves.easeOut,
     ));
 
-    controller.addListener(() {
+    _swipeOutController!.addListener(() {
       setState(() {
         _dragOffset = animation.value;
       });
     });
 
-    controller.addStatusListener((status) {
+    _swipeOutController!.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         widget.onSwipe(isKeep);
-        controller.dispose();
       }
     });
 
-    controller.forward();
+    _swipeOutController!.forward();
   }
 
   void _returnToCenter() {
